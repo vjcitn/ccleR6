@@ -1,0 +1,11 @@
+Package: ccleR6
+Title: ccleR6
+Version: 0.0.1
+Author: VJ Carey <stvjc@channing.harvard.edu>
+Description: exercises with P. Chapman's ccle database
+Suggests: 
+Depends: RSQLite, R6, dplyr
+Maintainer: VJ Carey <stvjc@channing.harvard.edu>
+License: Private
+LazyLoad: yes
+BiocViews:

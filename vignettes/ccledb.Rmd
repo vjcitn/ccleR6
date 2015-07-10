@@ -1,0 +1,85 @@
+---
+title: ccleR6
+author: "Vincent J. Carey, stvjc at channing.harvard.edu based on work of Phil Chapman at CRUK"
+date: "July 2015"
+output:
+  BiocStyle::pdf_document:
+    toc: yes
+    number_sections: yes
+  BiocStyle::html_document:
+    highlight: pygments
+    number_sections: yes
+    theme: united
+    toc: yes
+---
+
+<!--
+%\VignetteEngine{knitr::rmarkdown}
+%\VignetteIndexEntry{xyz}
+-->
+
+```{r style, echo = FALSE, results = 'asis'}
+BiocStyle::markdown()
+```
+```{r getp,echo=FALSE,results="hide"}
+Sys.setenv("CCLEDB_PATH"="/Users/stvjc/Research/CCLE_CHAPMAN/CellLineData.db")
+suppressPackageStartupMessages({
+library(ccleR6)
+})
+```
+
+# Introduction
+
+A large indexed SQLite database has been created by Phil Chapman
+to represent CCLE, Achilles, and other integrative data sources
+relevant to cancer biology.  
+
+This document describes some
+approaches to user interface design.  We indicate how to
+
+- query the database directly
+- provide R-level support for substantively useful self-description
+- carry out some exemplary 'analyses'
+
+For this code to work you need to have the environment variable
+`CCLEDB_PATH` defined to give the path to the SQLite file.
+
+# An R6 interface
+
+I believe that an object that is somewhat fleshed out relative to
+the database view provided by dplyr will come in handy.  Therefore
+I defined a reference class and have lightly populated it with
+some identifier vectors.
+
+```{r getit}
+ccle = ccledb$new(.ccleSrc)
+ccle
+"BRAF" %in% ccle$cngenes  # copy number gene list
+```
+
+I have not done much with this yet but I think this will
+help with subsetting and shiny query support.
+
+# dplyr-based interaction
+
+We can get a feel for the contents with some simple
+commands.  `.ccleSrc` is a globally defined dplyr `src`.
+```{r dodp}
+library(ccleR6)
+.ccleSrc
+.ccleSrc %>% tbl("ccle_cell_line_info") %>% head()
+```
+
+# Gene annotation
+
+Expression data are provided at probe-set level, with symbols.
+
+```{r lkex}
+.ccleSrc %>% tbl("ccle_exprs_tall") %>% head()
+```
+
+# Compound annotation
+
+```{r lkdr}
+.ccleSrc %>% tbl("ccle_drug_data") %>% head()
+```
