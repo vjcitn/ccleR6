@@ -1,0 +1,95 @@
+---
+title: ccleR6
+author: "Vincent J. Carey, stvjc at channing.harvard.edu based on work of Phil Chapman at CRUK"
+date: "July 2015"
+output:
+  BiocStyle::pdf_document:
+    toc: yes
+    number_sections: yes
+  BiocStyle::html_document:
+    highlight: pygments
+    number_sections: yes
+    theme: united
+    toc: yes
+---
+
+<!--
+%\VignetteEngine{knitr::rmarkdown}
+%\VignetteIndexEntry{xyz}
+-->
+
+```{r style, echo = FALSE, results = 'asis'}
+BiocStyle::markdown()
+```
+```{r getp,echo=FALSE,results="hide"}
+Sys.setenv("CCLEDB_PATH"="/Users/stvjc/Research/CCLE_CHAPMAN/CellLineData.db")
+suppressPackageStartupMessages({
+library(ccleR6)
+})
+```
+
+# Introduction
+
+A large indexed SQLite database has been created by Phil Chapman
+to represent CCLE, Achilles, and other integrative data sources
+relevant to cancer biology.  
+
+This document describes some
+approaches to user interface design.  We indicate how to
+
+- query the database directly
+- provide R-level support for substantively useful self-description
+- carry out some exemplary 'analyses'
+
+For this code to work you need to have the environment variable
+`CCLEDB_PATH` defined to give the path to the SQLite file.
+
+# An R6 interface
+
+I believe that an object that is somewhat fleshed out relative to
+the database view provided by dplyr will come in handy.  Therefore
+I defined a reference class and have lightly populated it with
+some identifier vectors.
+
+```{r getit}
+ccle = ccledb$new(.ccleSrc)
+ccle
+```
+
+This can be serialized, but the database connection needs to be
+refreshed on load.
+
+The "guide vectors" are created as hints on vocabularies in use.
+```{r chkg}
+"BRAF" %in% ccle$cngenes  # copy number gene list
+```
+
+# Some guided filters
+
+We have defined a number of filter functions to
+simplify common subsetting operations.
+```{r lkfs}
+ccle$src %>% filter_compound("Irinotecan")
+ccle$src %>% filter_organ("breast")
+ccle$src %>% filter_Histology_patt("%wing%")
+```
+
+# Widgets
+
+Two displays of the Barettina paper (Figures 4a and 4c)
+can be approached interactively using the multiWidget function.
+Briefly, `multiWidget(ccle)` will generate a browser window
+with two panes, concatenated on one page.  The first one allows
+selection of a gene for which hybrid capture mutation information
+has been obtained, and a compound.  The IC50s for cell lines
+with hybrid capture data are ordered and displayed.
+The second panel allows selection of
+a gene whose expression will be summarized across primary tumor sites.
+
+```{r shdem,fig=TRUE,echo=FALSE,fig.height=4.6}
+library(grid)
+library(png)
+im = readPNG("images/shinyDemo.png")
+grid.raster(im)
+```
+

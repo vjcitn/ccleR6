@@ -1,6 +1,6 @@
 Package: ccleR6
 Title: ccleR6
-Version: 0.0.1
+Version: 0.0.3
 Author: VJ Carey <stvjc@channing.harvard.edu>
 Description: exercises with P. Chapman's ccle database
 Suggests: 
