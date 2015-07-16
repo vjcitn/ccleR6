@@ -76,7 +76,8 @@ ccle$src %>% filter_Histology_patt("%wing%")
 
 # Widgets
 
-Two displays of the Barettina paper (Figures 4a and 4c)
+Two displays of the Barettina paper (Figures 4a [lower dotplot
+with sensitivity against line] and 4c)
 can be approached interactively using the multiWidget function.
 Briefly, `multiWidget(ccle)` will generate a browser window
 with two panes, concatenated on one page.  The first one allows
@@ -93,3 +94,15 @@ im = readPNG("images/shinyDemo.png")
 grid.raster(im)
 ```
 
+# To do
+
+The vocabularies used for cell lines and tumor anatomy are complicated
+and need harmonization and streamlining.
+
+Full dose-response information is available and should be exposed.
+
+Interfaces for filters and joins need to be specified and deployed for
+common use cases.
+
+Additional interactivity such as tooltips over points that can 
+describe mutation profiles.
