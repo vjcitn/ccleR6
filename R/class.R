@@ -1,6 +1,9 @@
 
 ccledb = R6Class("ccledb",
    public = list(
+     query_cell_lines = NA,
+     query_symbols = NA,
+     query_compounds = NA,
     cell_lines = NA,
     compounds = NA,
     organs = NA,
