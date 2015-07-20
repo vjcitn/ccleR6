@@ -1,0 +1,157 @@
+---
+title: ccleR6 get functions
+author: "Vincent J. Carey, stvjc at channing.harvard.edu based on work of Phil Chapman at CRUK"
+date: "July 2015"
+output:
+  BiocStyle::html_document:
+    highlight: pygments
+    number_sections: yes
+    theme: united
+    toc: yes
+---
+
+<!--
+%\VignetteEngine{knitr::rmarkdown}
+%\VignetteIndexEntry{xyz}
+-->
+
+```{r style, echo = FALSE, results = 'asis'}
+BiocStyle::markdown()
+```
+```{r getp,echo=FALSE,results="hide"}
+Sys.setenv("CCLEDB_PATH"="~/BigData/CellLineData/CellLineData.db")
+suppressPackageStartupMessages({
+library(ccleR6)
+})
+```
+
+# Introduction
+
+A large indexed SQLite database has been created by Phil Chapman
+to represent CCLE, Achilles, and other integrative data sources
+relevant to cancer biology.  
+
+This document describes some
+approaches to user interface design.  We indicate how to
+
+- query the database directly
+- provide R-level support for substantively useful self-description
+- carry out some exemplary 'analyses'
+
+For this code to work you need to have the environment variable
+`CCLEDB_PATH` defined to give the path to the SQLite file. ie 
+
+```Sys.setenv("CCLEDB_PATH"="path/to/db")```
+
+# An R6 interface
+
+I believe that an object that is somewhat fleshed out relative to
+the database view provided by dplyr will come in handy.  Therefore
+I defined a reference class and have lightly populated it with
+some identifier vectors.
+
+```{r getit}
+ccle = ccledb$new(.ccleSrc)
+ccle
+```
+
+This can be serialized, but the database connection needs to be
+refreshed on load.
+
+The "guide vectors" are created as hints on vocabularies in use.
+```{r chkg}
+"BRAF" %in% ccle$cngenes  # copy number gene list
+```
+
+# Some guided filters
+
+We have defined a number of filter functions to
+simplify common subsetting operations.
+```{r lkfs}
+ccle$src %>% filter_compound("Irinotecan")
+ccle$src %>% filter_organ("breast")
+ccle$src %>% filter_Histology_patt("%wing%")
+```
+
+# Query speed
+
+microbenchmark?
+
+# Get Data Function Family
+
+I extended the reference class itself to contain a query set that can be applied across different data sets.
+
+```{r queryspec}
+ccle$query_symbols <- c('PTEN', 'BRAF', 'NRAS', 'KRAS', 'SMARCA4', 'PIK3CA')
+ccle$query_cell_lines <- (ccle$src %>% filter_organ("skin") %>%  as.data.frame(n=-1))$CCLE_name
+ccle$query_compounds <- c('PLX4720', 'AZD6244', 'Lapatinib')
+```
+
+Data can then be retrieved by running a function against the R6 class
+
+```{r getdata} 
+affy_data <- get_affy(ccle)
+head(affy_data)
+hybcap_data <- get_hybcap(ccle)
+head(hybcap_data)
+resp_data <- get_response(ccle)
+head(resp_data)
+```
+
+Importantly, since the data structure is standardised we can now combine disparate data types into a common data frame
+
+```{r getdata2}
+combined_data <- bind_rows(affy_data,hybcap_data,resp_data)
+```
+
+# Modelling drug response
+
+The ```get_data``` functions can be combined to give an output suitable for modeling using the ```make_df``` function:
+
+```{r make_df} 
+my_df <- make_df(ccle)
+my_df[1:5,1:10]
+summary(lm(AZD6244_resp ~ as.factor(BRAF_hybcap), data=my_df))
+summary(lm(AZD6244_resp ~ as.factor(BRAF_hybcap) + as.factor(NRAS_hybcap), data=my_df))
+```
+
+# Visualising drug response
+
+Finally a convenient heatmap plot can be generated using the ```make_heatmap``` function to visualise drug response vs genetic features.
+
+```{r make_heatmap}
+make_heatmap(ccle, compound='AZD6244')
+```
+
+# Widgets
+
+Two displays of the Barettina paper (Figures 4a [lower dotplot
+with sensitivity against line] and 4c)
+can be approached interactively using the multiWidget function.
+Briefly, `multiWidget(ccle)` will generate a browser window
+with two panes, concatenated on one page.  The first one allows
+selection of a gene for which hybrid capture mutation information
+has been obtained, and a compound.  The IC50s for cell lines
+with hybrid capture data are ordered and displayed.
+The second panel allows selection of
+a gene whose expression will be summarized across primary tumor sites.
+
+```{r shdem,fig=TRUE,echo=FALSE,fig.height=4.6}
+library(grid)
+library(png)
+im = readPNG("images/shinyDemo.png")
+grid.raster(im)
+```
+
+# To do
+
+The vocabularies used for cell lines and tumor anatomy are complicated
+and need harmonization and streamlining.
+
+Full dose-response information is available and should be exposed.
+
+Interfaces for filters and joins need to be specified and deployed for
+common use cases.
+
+Additional interactivity such as tooltips over points that can 
+describe mutation profiles.
